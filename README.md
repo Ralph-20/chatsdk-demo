@@ -14,6 +14,58 @@ One bot — `bob-the-bot` — reachable from **Slack**, **GitHub**, and (optiona
 
 All long-running work runs as durable [Workflow DevKit](https://vercel.com/docs/workflow) pipelines (survives restarts, observable, step state recorded to Postgres). Secrets that the sandbox needs (DB credential, GitHub token) are minted per-step inside the sandbox, never exposed to the rest of the function.
 
+## Request flow
+
+A message lands on one webhook and is dispatched through a single routing chain
+(`lib/bot.ts`). The first matching rule wins; everything else falls through to a
+plain chat reply. Routing happens in the **webhook function** — durable workflows
+only start *after* a route is chosen.
+
+```
+@-mention / thread reply (Slack · GitHub · Linear)
+        │
+        ▼
+POST /api/webhooks/[platform]            app/api/webhooks/[platform]/route.ts
+        │  getBot() → bot.webhooks[platform]   (verify signature, parse event)
+        ▼
+onNewMention / onSubscribedMessage       lib/bot.ts
+        │
+        ▼
+┌─ routing chain (first match wins) ──────────────────────────────┐
+│ 1. isGitHubPr()            PR thread?        ─► PR-review workflow │
+│ 2. maybeStartSlackPrReview() PR URL pasted?  ─► PR-review workflow │
+│ 3. maybeStartDbQuestion()  "db:" prefix?     ─► DB-question workflow│
+│ 4. maybeRouteByIntent()    LLM classifier ───┐                     │
+│ 5. else                                      │  ─► chat reply       │
+└──────────────────────────────────────────────┼────────────────────┘
+                                                ▼
+                              classifyIntent()  lib/intent.ts
+                              Haiku 4.5 · temp 0 · structured output
+                              { reasoning, intent, confidence, question }
+                              confidence < 0.6  ─► downgrade to chat
+                              logs:  [intent] db_question@0.92; reasoning: …
+                                                │
+                          intent = db_question? │
+                                ┌───────────────┴───────────────┐
+                                │ yes                            │ no
+                                ▼                                ▼
+                  start(dbQuestionWorkflow)              helpfulAgent (chat)
+                  workflows/db-question-workflow.ts
+                                │
+                                ▼
+        ┌─ durable steps (Workflow dashboard) ───────────────────┐
+        │ generate SELECT  →  query-in-sandbox  →  post answer    │
+        │  (LLM → SQL)        (ephemeral VM)       (back to thread)│
+        └─────────────────────────────────────────────────────────┘
+```
+
+**Example — "how many orders shipped this week?"** (no `db:` prefix, no PR URL):
+rules 1–3 miss → `maybeRouteByIntent()` → `classifyIntent()` returns
+`db_question@0.92` → `start(dbQuestionWorkflow)` posts *"On it — querying the demo
+DB…"*, the sandbox runs the SELECT, and the prose answer is posted in-thread. The
+`[intent]` decision shows in **Runtime Logs** (it runs in the webhook function);
+the SQL/sandbox steps show in the **Workflow dashboard**.
+
 ## Stack
 
 - **Next.js 16** (App Router) + React 19 — single route: `app/api/webhooks/[platform]/route.ts`
