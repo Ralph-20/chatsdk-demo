@@ -74,8 +74,14 @@ export async function classifyIntent(text: string): Promise<IntentResult> {
 
     // Low confidence → don't trigger a workflow; treat as chat.
     if (output.confidence < MIN_CONFIDENCE) {
+      console.log(
+        `[intent] ${output.intent}@${output.confidence.toFixed(2)} < ${MIN_CONFIDENCE} → chat (low confidence); reasoning: ${output.reasoning}`,
+      );
       return { ...output, intent: "chat" };
     }
+    console.log(
+      `[intent] ${output.intent}@${output.confidence.toFixed(2)}; reasoning: ${output.reasoning}`,
+    );
     return output;
   } catch (err) {
     console.error("[intent] classify failed:", err);
