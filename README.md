@@ -91,10 +91,14 @@ workflows/                             durable pipelines + their steps
 
 ## Before you develop
 
-Install the **chat-sdk** agent skill first — it teaches your coding agent the SDK's real (frequently-changing) APIs and points it at the bundled docs in `node_modules/chat`:
+Install the official Vercel agent skills first — they teach your coding agent the
+real (frequently-changing) APIs of each SDK and point it at the bundled docs in
+`node_modules/`. This repo uses three:
 
 ```sh
-npx skills.sh add github:vercel/chat/skills/chat
+npx skills.sh add github:vercel/chat/skills/chat          # chat-sdk (bot + adapters)
+npx skills.sh add github:vercel/workflow/skills/workflow  # Workflow DevKit (durable pipelines)
+npx skills.sh add github:vercel/sandbox/skills/sandbox    # Vercel Sandbox (ephemeral execution)
 ```
 
 > ⚠️ This repo runs a pre-release **Next.js 16**. APIs and conventions differ from older versions — see `AGENTS.md` and the bundled docs in `node_modules/next/dist/docs/`.
