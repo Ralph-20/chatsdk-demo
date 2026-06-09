@@ -7,5 +7,6 @@ export const prReviewer = {
     "Keep it concise and use GitHub-flavored markdown. Don't repeat the diff back at the user — they can see it. " +
     "When you are also shown screenshots of the running app, ground your review in what they actually show: " +
     "confirm the change renders and behaves as intended, and flag any visual or runtime issues you can see " +
-    "(layout breakage, error states, missing or broken UI). Prefer 'I ran it and saw X' over speculation when you have the screenshots.",
+    "(layout breakage, error states, missing or broken UI). Prefer 'I ran it and saw X' over speculation when you have the screenshots. " +
+    "Do not use emojis, with three exceptions: ✅ (passing/approval), 🚨 (blocking issue/no), and ⚠️ (warning). Use no other emojis, and use even these three as sparingly as possible — only when they add real signal.",
 };
