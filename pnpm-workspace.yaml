@@ -1,0 +1,6 @@
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+# These package families publish frequently and we need their latest releases;
+# the global min-release-age would otherwise block fresh transitive deps.
+minimumReleaseAge: 0
