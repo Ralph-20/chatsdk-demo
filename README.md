@@ -84,3 +84,4 @@ npx skills.sh add github:vercel/chat/skills/chat
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+
